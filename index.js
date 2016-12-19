@@ -49,7 +49,8 @@ SoundCloud.prototype.resolve = function (url, callback) {
     }
 
     var resolveUrl = this._baseUrl + '/resolve.json?url=' + encodeURIComponent(url) + '&client_id=' + this._clientId;
-    this._jsonp(resolveUrl, function (data) {
+
+    this._resolveToJson(resolveUrl, function (data) {
         this.cleanData();
 
         if (Array.isArray(data)) {
@@ -74,21 +75,16 @@ SoundCloud.prototype.resolve = function (url, callback) {
     }.bind(this));
 };
 
-SoundCloud.prototype._jsonp = function (url, callback) {
-    var target = document.getElementsByTagName('script')[0] || document.head;
-    var script = document.createElement('script');
+SoundCloud.prototype._resolveToJson = function (url, callback) {
+  var xhttp = new XMLHttpRequest();
 
-    var id = 'jsonp_callback_' + (new Date()).valueOf() + Math.floor(Math.random() * 1000);
-    window[id] = function (data) {
-        if (script.parentNode) {
-            script.parentNode.removeChild(script);
-        }
-        window[id] = function () {};
-        callback(data);
-    };
-
-    script.src = _appendQueryParam(url, 'callback', id);
-    target.parentNode.insertBefore(script, target);
+  xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+         callback(JSON.parse(this.responseText));
+      }
+  };
+  xhttp.open('GET', url, true);
+  xhttp.send();
 };
 
 SoundCloud.prototype.on = function (e, fn) {
